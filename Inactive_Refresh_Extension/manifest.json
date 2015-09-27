@@ -5,6 +5,9 @@
   "name": "LC Kiosk",
   "description": "Inactivity Refresh for Google Chrome",
   "version": "1.0",
+  "icons": {
+  "48": "icon_48.png"
+  },
 
   "background": {
       "scripts": [
