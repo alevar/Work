@@ -1,0 +1,12 @@
+os/custom-img
+os/soft
+!install.sh
+!net
+!net.py
+!requirements.txtz
+!software.txt
+ubuntu*
+lc*
+name*
+img*
+
