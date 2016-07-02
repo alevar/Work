@@ -1,0 +1,67 @@
+CS Ubuntu Image 2.0 - Work Flow
+
+1. Testing 16.04 with the set of old tools
+
+2. Adding Network Tools:
+	wireshark2.0 + - allow nonsudoers to run
+	tcpdump +
+	mtr +
+	nmap +
+	etherape +
+	acccheck
+	ace-voip
+	amap
+	automater
+	braa
+	casefile
+	cdpsnarf
+	cisco-torch
+	cookie-cadger
+	copy-router-config
+	dmitry
+	dnmap
+	dnsenum
+	dnsmap
+	dnsrecon
+	dnstracer
+	dnswalk
+	dotdotpwn
+	enum4linux
+	enumiax
+	exploitdb
+	fierce
+	firewalk
+	fragroute
+	fragrouter
+	ghost-phisher
+	golismero
+	goofile
+	lbd
+	maltego-teeth
+	masscan
+	metagoofil
+	miranda
+	nmap
+	ntop
+	p0f
+	parsero
+	recon-ng
+	set
+	smtp-user-enum
+	snmpcheck
+	sslcaudit
+	sslsplit
+	sslstrip
+	sslyze
+	thc-ipv6
+	theharvester
+	tlssled
+	twofi
+	urlcrazy
+	wol-e
+	xplico
+	ismtp
+	intrace
+	hping3
+
+3. /etc/apt/sources.list must be updated manually when building a system. Otherwise it remains inactive. Such can be achieved by replacing the appropriate system names (such as "xenial" for 16.04 LTS) with the ones for the new OS in the "sources.list" file supplied with the scripts.

@@ -1,0 +1,215 @@
+====================================================================================
+====================================================================================
+====================================================================================
+!!!!!!!!!!!!!!!!!!!!!!!! SQUASHFS CAN ONLY BE PROPERLY DISMANTLED AND REBUILD WITHIN THE SAME KERNEL!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
+====================================================================================
+====================================================================================
+====================================================================================
+
+
+
+
+
+-1. Set up as OVF
+
+0. Questions:
+	1. 
+	
+0.1 Procedure for setting up an image to edit:
+
+	1. Create a temporary directory and mount the image there:
+		mkdir /tmp/livecd
+		sudo mount -o loop xubuntu-14.04.3-desktop-amd64.iso /tmp/livecd
+		
+	2. Create a working area in any directory you prefer and copy contents over to the working area:
+		mkdir -p livecd/cd
+		sudo rsync --exclude=/casper/filesystem.squashfs -a /tmp/livecd/ livecd/cd
+		mkdir livecd/squashfs  livecd/custom
+		sudo modprobe squashfs
+		sudo mount -t squashfs -o loop /tmp/livecd/casper/filesystem.squashfs livecd/squashfs/
+		sudo cp -a livecd/squashfs/* livecd/custom
+		
+	3. Provide network access:
+		sudo cp /etc/resolv.conf /etc/hosts livecd/custom/etc/
+		
+	4. Create a pseudo filesystem:
+		sudo chroot livecd/custom /bin/bash -l
+		mount -t proc none /proc/
+		mount -t sysfs none /sys/
+		
+	5. Ready to be customized
+		
+0.2 Customization:
+	
+0. Setting up the general info config at ~/Work/os/livecd/cd/.disk/info
+	
+	1. To list all the packages run:
+		dpkg-query -W --showformat='${Package}\n' | less
+		
+	2. All the usual commands will work while you are chroot-ed into the new filesystem
+	
+	3. To set the new Wallpaper modify the command below:
+		gconftool-2 --direct --config-source xml:readwrite:/etc/gconf/gconf.xml.defaults --set -t string /desktop/gnome/background/picture_filename  /tmp/share/backgrounds/xfce/lc.jpg
+		
+	4. 
+	
+0.3 Once the changes are implemented and ready to be tested:
+	
+	1. Clean up after yourself
+		apt-get clean
+		rm -rf /tmp/*
+		rm -f /etc/hosts /etc/resolv.conf
+		umount /proc/
+		umount /sys/
+		exit
+		
+	2. Prepping the iso:
+		sudo chmod +w livecd/cd/casper/filesystem.manifest
+		sudo su
+		sudo chroot livecd/custom dpkg-query -W --showformat='${Package} ${Version}\n' > livecd/cd/casper/filesystem.manifest
+		sudo cp livecd/cd/casper/filesystem.manifest livecd/cd/casper/filesystem.manifest-desktop
+		
+	3. Generate new Squashfs:
+		sudo mksquashfs livecd/custom livecd/cd/casper/filesystem.Squashfs
+	
+	4. Update md5 sums:
+		sudo rm livecd/cd/md5sum.txt
+		sudo bash -c 'cd livecd/cd && find . -type f -exec md5sum {} +' > md5sum.txt
+		
+	5. Create the iso with:
+		cd livecd/cd
+    	sudo mkisofs -r -V "Ubuntu-Live" -b isolinux/isolinux.bin -c isolinux/boot.cat -cache-inodes -J -l -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/Work/os/lc_os_custom_ubuntu_1604.iso .
+
+    	OR FOR LARGER ISO FILES:
+    	sudo mkisofs -allow-limited-size -udf -r -V "Ubuntu-Live" -b isolinux/isolinux.bin -c isolinux/boot.cat -cache-inodes -J -l -no-emul-boot -boot-load-size 4 -boot-info-table -o ~/Work/os/lc_os_custom_ubuntu_1604.iso .	
+
+1. Started by following the instructions in the following two links:
+
+	http://askubuntu.com/questions/516687/how-do-i-make-a-custom-ubuntu-iso-for-fully-offline-installations
+	http://askubuntu.com/questions/48535/how-to-customize-the-ubuntu-live-cd
+
+2. Second link seems a little more promising (better explanations)
+
+3. Downloading Xubunutu. Reasons for the choice:
+	1. Native environment based on OpenBOX guarantees much less memory consumption.
+	2. Based on personal experience XFCE utilizes about 1GB less memory than Unity 8 or Gnome 3.
+	3. Mostly intuitive and user-friendly environment.
+
+4. After the image was setup for customization the following packages were determined to be unnecessary:
+	
+sudo apt-get remove --purge abiword abiword-common abiword-plugin-grammar abiword-plugin-mathview evolution-data-server-common gimp gimp-data gmusicbrowser gnome-mines gnome-sudoku gnumeric gnumeric-common gnumeric-doc gnomine mousepad pidgin pidgin-data pidgin-libnotify pidgin-otr thunderbird xfburn xchat
+
+sudo apt-get autoremove
+
+sudo add-apt-repository ppa:paolorotolo/android-studio
+wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add - 
+sudo sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+
+sudo apt-get update
+sudo apt-get upgrade
+
+5. Packages to be installed in the initial setup:
+
+sudo apt-get install vim synaptic libreoffice xubuntu-restricted-extras libavcodec-extra libdvdread4 rar gedit htop smlnj ml-yacc ml-lex git default-jre default-jdk swi-prolog logisim libc6-dbg gdb valgrind eclipse mysql-workbench python-pip python3-pip python-numpy python-matplotlib vlc mysql-server samba system-config-samba ssh google-chrome-stable android-studio apache2 php5 libapache2-mod-php5 sbcl
+
+
+To install NetBeans:
+	the installation bash script is provided with the other tools for this customization
+	run the scipt with --silent 
+
+Installing python modules and dependencies:
+	requirements.txt is provided with the other tools for this customization
+	pip3 install -r requirements.txt
+
+google drive (http://onetransistor.blogspot.com/2014/09/regular-backups-using-grive-on-ubuntu.html)
+ 
+6. Configurations to be made right after the package installation
+
+	1. prevent mysql from loading on startup
+	2. Speeding up the UI by creating .gtkrc-2.0 in home directory with the following settings:
+		gtk-menu-popup-delay = 0 
+		gtk-menu-popdown-delay = 0 
+		gtk-menu-bar-popup-delay = 0 
+		gtk-enable-animations = 0 
+		gtk-timeout-expand = 0
+		gtk-timeout-initial = 0
+		gtk-timeout-repeat = 0
+
+7. Designing the partition table:
+	1. /		- 30GB
+	2. /home	- >60GB
+	3. swap		- 10GB
+	4. VM		- UND
+	5. Restore	- 5GB
+
+8. Testing results will go in this section
+
+9. Modification of the Installation Procedure: once the platform with the aforementioned configurations is successful.
+	1. Do not allow the repartitioning of the bootable SSD
+
+10. Write user statistics software that will send certain statistics to the LIS administrator for research purposes.
+
+11. Write bash scripts for quick modification of Xubuntu into the LC_OS
+
+12. Change the name of the distribution to comply with the license:
+	Change DISTRIB_DESCRIPTION in /etc/lsb-release
+
+13. Change the default user:
+	Change needs to be implemented in the .disk/info file
+
+14. Modify casper/filesystem.manifest
+
+15. Modify README.diskdefines in root
+
+16. /usr/share/adduser/adduser.conf seems to be alright for now.
+
+17. Seems like the installation procedure files (at least some of them) are under /usr/share/ubiquity. Eventually, once everything else is configured, it will be nice to change the slideshow as well. Still looking for the main installation procedure though.
+
+18. Look into modifying casper/initrd.lz - needs to be brought up from binaries and recompiled again
+
+19. As to the modification of the installation process the following entries look promising:
+	cd/boot/grub/loopback.cfg and cd/boot/grub/grub.cfg
+	the aforementioned configuration file has references to the applications that are running
+
+20. The process that runs installation is:
+	ubiquity gtk-ui
+
+21. Research how to create a restore partition with the iso image of the operating system or with the automatic backup that happens right after the initial installation.
+
+22. Update the default applications. Currently some dependencies are unset after the removal of the default software.
+
+http://www.linuxquestions.org/questions/linux-newbie-8/how-to-create-system-recovery-partition-in-linux-ubuntu-4175452606/
+
+Perhaps instead of having a separate partition we could have an image sitting somewhere on the server and have a grub option to restore from the remote server. This way we could always keep the update version of the operating system lying in the repository on the server and have the system ready for anyone to recover in case of the corrupt filesystem.
+
+Software(Dr. Lee):
+NetBeans___________________yes
+git________________________yes
+mysql-server_______________yes
+SourceTree_________________Unknown Support
+mysql-workbench____________yes
+wingIDE 101________________yes
+python3____________________yes
+pyCharm community editions_yes
+smlnj______________________yes
+ml-yacc____________________yes
+ml-lex_____________________yes
+swi-prolog_________________yes
+commonLISP (cLISP)_________yes
+LAMP_______________________yes
+eclipse____________________yes
+Java:______________________yes
+	default-jre____________yes
+	default-jdk____________yes
+AndroidStudio______________yes
+gdb:_______________________yes
+	libc6-dbg______________yes
+	gdb____________________yes
+	valgrind_______________yes
+c++11______________________yes
+
+requirements for python from the machine learning_______yes
+
+logisim____________________yes
+
+
