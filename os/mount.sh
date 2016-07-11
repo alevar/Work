@@ -1,42 +1,44 @@
 #!/bin/bash
 
+curPath=$(pwd)
 image=$1
 
 if [[ -n "$image" ]]; then
     
-    if [ -d "/tmp/livecd" ]; then
-
-		sudo rm -r /tmp/livecd
-
-	fi
-
-	if [ -d "./livecd" ]; then
-
-		sudo rm -r ./livecd
+    if [ -d "./custom-img" ]; then
+        echo "Removing previous builds - custom-img"
+		sudo rm -r ./custom-img
 
 	fi
 
-	if [ -d "./lc_os_custom_ubuntu_1604.iso" ]; then
+    gsettings set org.gnome.desktop.media-handling autorun-never true
 
-		sudo rm -r ./lc_os_custom_ubuntu_1604.iso
+    mkdir ./custom-img
+    cp "$image" ./custom-img
+    cd ./custom-img
+    mkdir mnt
+    imageName=${image##*/}
+    sudo mount -o loop "$imageName" mnt
+    mkdir extract
+    sudo rsync --exclude=/casper/filesystem.squashfs -a mnt extract
+    sudo unsquashfs mnt/casper/filesystem.squashfs
+    sudo mv squashfs-root edit
+    
+    mv edit/etc/hosts edit/etc/hosts.old
+    mv edit/etc/resolv.conf edit/etc/resolv.conf.old
+	cp /etc/resolv.conf /etc/hosts edit/etc/
+	cp -r $curPath/soft edit/home/
+	cp $curPath/sources.list edit/etc/apt/
+    cp $curPath/build.sh ./
 
-	fi
+    sudo mount --bind /dev/ edit/dev
+    sudo chroot edit ./home/soft/install.sh
 
-	mkdir /tmp/livecd
-	mount -o loop "$image" /tmp/livecd
+    sudo ./build.sh
 
-	mkdir -p livecd/cd
-	rsync --exclude=/casper/filesystem.squashfs -a /tmp/livecd/ livecd/cd
-	mkdir livecd/squashfs  livecd/custom
-	modprobe squashfs
-	mount -t squashfs -o loop /tmp/livecd/casper/filesystem.squashfs livecd/squashfs/
-	cp -a livecd/squashfs/* livecd/custom
+	# chroot livecd/custom /bin/bash -l
 
-	cp /etc/resolv.conf /etc/hosts livecd/custom/etc/
-	cp -r ./soft livecd/custom/home/
-	cp sources.list livecd/custom/etc/apt/
-
-	chroot livecd/custom /bin/bash -l
+    # sudo umount edit/dev
 
 else
     echo "Starting Image Argument Missing"

@@ -12,7 +12,7 @@ sudo sed -i '/ubiquity/d' extract/mnt/casper/filesystem.manifest-desktop
 
 sudo sed -i '/casper/d' extract/mnt/casper/filesystem.manifest-desktop
 sudo rm extract/mnt/casper/filesystem.squashfs
-sudo mksquashfs edit extract/mnt/casper/filesystem.squashfs -b 1048576
+sudo mksquashfs edit extract/mnt/casper/filesystem.squashfs -b 1048576 -comp xz -Xdict-size 100%
 
 printf $(sudo du -sx --block-size=1 edit | cut -f1) | sudo tee extract/mnt/casper/filesystem.size
 
