@@ -73,7 +73,8 @@ apt-get autoclean
 # comment out the "start on" line in /etc/init/mysql.conf
 rm -rf /tmp/* ~/.bash_history
 rm /etc/hosts /etc/resolv.conf
-mv /etc/hosts.old /etc/hosts /etc/resolv.conf.old /etc/resolv.conf
+mv /etc/hosts.old /etc/hosts
+mv /etc/resolv.conf.old /etc/resolv.conf
 
 umount /proc || umount -lf /proc
 umount /sys

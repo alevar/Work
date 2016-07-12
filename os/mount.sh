@@ -32,6 +32,7 @@ if [[ -n "$image" ]]; then
     cp $curPath/build.sh ./
 
     sudo mount --bind /dev/ edit/dev
+    #sudo mount -o bind /run/ edit/run
     sudo chroot edit ./home/soft/install.sh
 
     sudo ./build.sh
