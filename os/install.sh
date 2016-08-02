@@ -24,6 +24,10 @@ dpkg --add-architecture i386
 
 apt-get -qq update
 apt-get -qq upgrade
+
+echo "mysql-server mysql-server/root_password password strangehat" | sudo debconf-set-selections
+echo "mysql-server mysql-server/root_password_again password strangehat" | sudo debconf-set-selections
+
 # apt-get dist-upgrade
 
 # prior to installing new software verify that apt-get download was once successful. In case it wasn't successful/didn't run before, apt-get download whould finish first in order to optimize performance and network load in further attempts to produce the image. In case it did run the dpkg -i should first instsall all the available debs and then apt-get install -f should complete all the dependencies, and
@@ -31,13 +35,17 @@ apt-get -qq upgrade
 
 # Include verifications for each step of the execution of the script. Link the mount, install and build scripts into a single execution
 
-apt-get build-dep python-matplotlib
+apt-get -qq build-dep python-matplotlib
 
 # below line defines installation of all software components
 # apt-get install $(grep -vE "^\s*#" software.txt  | tr "\n" " ")
 
 # below command defines installation of the base functionality packages
 apt-get -qq install $(grep -vE "^\s*#" softwareINSTALL.txt  | tr "\n" " ")
+
+pip install --upgrade pip
+pip3 install --upgrade pip
+pip install runipy
 
 apt-get -qq remove --purge $(grep -vE "^\s*#" softwareREMOVE.txt  | tr "\n" " ")
 
@@ -46,7 +54,7 @@ gsettings set com.canonical.Unity.Dash scopes "['home.scope', 'applications.scop
 
 python net.py
 
-for dir in ~/Work/os2/soft/progs/*; do
+for dir in /home/soft/progs/*; do
     filename=$(basename "$dir")
     extension="${filename##*.}"
     if [ "$extension" == "sh" ]; then
@@ -60,11 +68,12 @@ for dir in ~/Work/os2/soft/progs/*; do
     fi
 done
 
+apt-get install -f
+
 pip3 install -r requirements.txt
 
 pip3 install -U tornado
 
-apt-get install -f
 # apt-mark unhold linux-headers-generic linux-image-generic
 # aptitude unhold linux-headers-generic linux-image-generic
 apt-get autoremove
