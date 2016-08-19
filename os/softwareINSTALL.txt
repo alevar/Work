@@ -125,3 +125,4 @@ libgle3
 python-dev
 libssl-dev
 virtualenv
+oracle-java8-installer
