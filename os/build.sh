@@ -5,8 +5,7 @@ sudo umount edit/dev
 sudo chmod +w extract/mnt/casper/filesystem.manifest
 sudo chroot edit dpkg-query -W --showformat='${Package} ${Version}n' | sudo tee extract/mnt/casper/filesystem.manifest
 
-sudo cp extract/mnt/casper/filesystem.manifest 
-extract/mnt/casper/filesystem.manifest-desktop
+sudo cp extract/mnt/casper/filesystem.manifest extract/mnt/casper/filesystem.manifest-desktop
 
 sudo sed -i '/ubiquity/d' extract/mnt/casper/filesystem.manifest-desktop
 
