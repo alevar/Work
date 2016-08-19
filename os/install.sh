@@ -17,6 +17,7 @@ add-apt-repository ppa:nilarimogard/webupd8 -y
 add-apt-repository ppa:webupd8team/sublime-text-3 -y
 add-apt-repository ppa:mystic-mirage/pycharm -y
 add-apt-repository ppa:paolorotolo/android-studio -y
+add-apt-repository ppa:webupd8team/java -y
 wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - 
 sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
 
@@ -25,8 +26,13 @@ dpkg --add-architecture i386
 apt-get -qq update
 apt-get -qq upgrade
 
+# accepting license agreement in order to precede with silent installation of mysql-server
+
 echo "mysql-server mysql-server/root_password password strangehat" | sudo debconf-set-selections
 echo "mysql-server mysql-server/root_password_again password strangehat" | sudo debconf-set-selections
+
+# accepting license agreement in order to procede with silent installation of Oracle JDK
+echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
 
 # apt-get dist-upgrade
 
@@ -73,6 +79,11 @@ apt-get install -f
 pip3 install -r requirements.txt
 
 pip3 install -U tornado
+
+pip freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs pip install -U
+
+pip install --upgrade ipython
+pip3 install --upgrade ipython
 
 # apt-mark unhold linux-headers-generic linux-image-generic
 # aptitude unhold linux-headers-generic linux-image-generic
