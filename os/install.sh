@@ -77,15 +77,16 @@ done
 apt-get install -f
 
 pip3 install -r requirements.txt
+#pip install -r requirements.txt
 
 pip3 install -U tornado
+#pip install -U tornado
 
-pip install --upgrade ipython
 pip3 install --upgrade ipython
+#pip install --upgrade ipython
 
-pip freeze --local | grep -v '^\-e' | cut -d = -f 1  | xargs pip install -U
-pip install --upgrade jinja2
-
+pip3 install --upgrade jinja2
+#pip install --upgrade jinja2
 # apt-mark unhold linux-headers-generic linux-image-generic
 # aptitude unhold linux-headers-generic linux-image-generic
 apt-get autoremove
