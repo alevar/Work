@@ -3,6 +3,10 @@ import os
 import platform
 from pprint import pprint
 
+currentPlatform = platform.system()
+if currentPlatform == "Windows":
+    from _winreg import *
+
 # what about un_dc_ac, un_dc_b queue? is it color?
 
 # write mac and win side scripts to get all printer names
@@ -87,7 +91,7 @@ def linRun(column):
         print(bws)
 
 def winRun(column):
-    testCaseWS = '9552'
+    WS_Number = platform.node()[2:]
     if testCaseWS in column["WS#"]:
         WS_DB_index = column["WS#"].index(testCaseWS)
         printers = column["Printers"][WS_DB_index]
@@ -109,7 +113,7 @@ def winRun(column):
         print(bws)
 
 def macRun(column):
-    testCaseWS = '9552'
+    WS_Number = platform.node().strip(".")[0]
     if testCaseWS in column["WS#"]:
         WS_DB_index = column["WS#"].index(testCaseWS)
         printers = column["Printers"][WS_DB_index]
@@ -132,7 +136,6 @@ def macRun(column):
 
 def main():
 
-    currentPlatform = platform.system()
     # Need to know how to get the workstation number from mac or pc
 
     with open('dataset_sep.csv', 'rb') as csvfile:
