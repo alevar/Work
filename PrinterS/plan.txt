@@ -1,0 +1,19 @@
+Q/A:
+1. Do we have WS list?
+- Querying
+2. Can we 
+3. What OS on the WSs?
+4. Are there any strictly b/w printers in the dataset?
+
+Plan:
+1. also write a testing utility:
+    a. first within the script itslf on the machine after the operations were successful verify by system settings
+    b. once the script is done on all machines, verify through kbox
+2. Test the connection with something similar to https://gallery.technet.microsoft.com/scriptcenter/Check-if-the-network-30e7800a
+
+3. Perhaps testing in the previous step will also tell us about any driver issues
+
+Script:
+1. detect the os
+2. detect all the ports associated with the machine
+3. 
