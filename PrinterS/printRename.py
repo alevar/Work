@@ -1,6 +1,7 @@
 import csv
 import os
 import platform
+import subprocess
 from pprint import pprint
 
 currentPlatform = platform.system()
@@ -15,6 +16,9 @@ if currentPlatform == "Windows":
 
 # Also write a reporter:
     # Will send a note notifying the os, ws# and what has been changed
+
+colorCodes = [ "color",
+               "pcl"]
 
 colorQueues = [ "ca_111_ac",
                 "cf_cm_cc",
@@ -73,8 +77,8 @@ def linRun(column):
     if testCaseWS in column["WS#"]:
         WS_DB_index = column["WS#"].index(testCaseWS)
         printers = column["Printers"][WS_DB_index]
-        colors = identifyColor(printers)
-        bws = identifyBW(list(set(printers)-set(colors)))
+        colors = identifyColor(printers[1])
+        bws = identifyBW(list(set(printers[1])-set(colors)))
 
         if len(colors) == 0 and len(bws) == 0:
             report(None)
@@ -91,31 +95,63 @@ def linRun(column):
         print(bws)
 
 def winRun(column):
-    WS_Number = platform.node()[2:]
-    if testCaseWS in column["WS#"]:
-        WS_DB_index = column["WS#"].index(testCaseWS)
-        printers = column["Printers"][WS_DB_index]
-        colors = identifyColor(printers)
-        bws = identifyBW(list(set(printers)-set(colors)))
+
+    def findPrinters():
+        regPrintersPort = []
+        regPrintersName = []
+        
+        aReg = ConnectRegistry(None,HKEY_LOCAL_MACHINE)
+
+        aKey = OpenKey(aReg,r"SYSTEM\CurrentControlSet\Control\Print\Printers")
+        for i in range(1024):
+            try:
+                asubkey_name=EnumKey(aKey,i)
+                asubKey=OpenKey(aKey,asubkey_name)
+                ports=QueryValueEx(asubKey,"Port")
+                names=QueryValueEx(asubKey,"Name")
+                regPrintersPort.append(ports[0])
+                regPrintersName.append(names[0])
+                print("VAL", ports)
+                print("NAME: ",names)
+            except EnvironmentError:
+                pass
+        return [regPrintersName, regPrintersPort]
+    
+    WS_Number = "5172" #platform.node()[2:]
+    if WS_Number in column["WS#"]:
+        WS_DB_index = column["WS#"].index(WS_Number)
+        printers2 = column["Printers"][WS_DB_index]
+        printers = findPrinters()
+        colors = identifyColor(printers[1])
+        bws = identifyBW(list(set(printers[1])-set(colors)))
 
         if len(colors) == 0 and len(bws) == 0:
             report(None)
         elif len(colors) != 0 and len(bws) == 0:
+            for color in colors:
+                portIndex = printers[1].index(color)
+                printName = printers[0][portIndex]
+                print("LALA",str(printName))
+                command = 'printui.exe /dl /n "'+printName+'" /q'
+                #subprocess.call([command])
+                os.system(command)
             print("WOO Color")
         elif len(colors) == 0 and len(bws) != 0:
             print("WOO BWS")
         else:
             print("WOO Both")
 
-        print(WS_DB_index)
-        print(printers)
-        print(colors)
-        print(bws)
+        print("Index ",WS_DB_index)
+        print("All Printers ",printers)
+        print("Colors ",colors)
+        print("BWS ",bws)
+    else:
+        print("WS NOT ON THE LIST")
 
 def macRun(column):
     WS_Number = platform.node().strip(".")[0]
-    if testCaseWS in column["WS#"]:
-        WS_DB_index = column["WS#"].index(testCaseWS)
+    if WS_Number in column["WS#"]:
+        WS_DB_index = column["WS#"].index(WS_Number)
         printers = column["Printers"][WS_DB_index]
         colors = identifyColor(printers)
         bws = identifyBW(list(set(printers)-set(colors)))
@@ -133,8 +169,12 @@ def macRun(column):
         print(printers)
         print(colors)
         print(bws)
+    else:
+        print("WS NOT ON THE LIST")
 
 def main():
+
+    print("current platform", currentPlatform)
 
     # Need to know how to get the workstation number from mac or pc
 
@@ -149,7 +189,7 @@ def main():
                     column[h].append(v.split("\n"))
                 else:
                     column[h].append(v)
-
+                    
         if currentPlatform == "Linux":
             linRun(column)
 
