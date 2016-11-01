@@ -11,15 +11,6 @@ currentPlatform = platform.system()
 if currentPlatform == "Windows":
     from _winreg import *
 
-# what about un_dc_ac, un_dc_b queue? is it color?
-
-# write mac and win side scripts to get all printer names
-
-# Write mac and win side scripts to change the printers
-
-# Also write a reporter:
-    # Will send a note notifying the os, ws# and what has been changed
-
 colorCodes = [ "color",
                "pcl"]
 
@@ -61,10 +52,10 @@ def report(queue):
 
 def identifyBW(printers,queues):
     bws = []
-    regex = "HIP"
+    regex = re.compile(' [Bb][ ]*&[ ]*[Ww]')
     for queue in queues:
         for subqueue in queue.lower().split():
-            if " b&w" in printers[0][printers[1].index(queue)].lower():
+            if regex.search(printers[0][printers[1].index(queue)]) != None:
                 bws.append(printers[0][printers[1].index(queue)])
     return list(set(bws))
 
@@ -96,7 +87,7 @@ def linRun(column):
 def winRun(column):
     
     logger = logging.getLogger('printerRenameApp')
-    hdlr = logging.FileHandler('C:\Users\Administrator\AppData\printerRenameApp.log')
+    hdlr = logging.FileHandler('C:\Users\Administrator\printerRenameApp.log')
     formatter = logging.Formatter('%(message)s')
     hdlr.setFormatter(formatter)
     logger.addHandler(hdlr)
@@ -126,8 +117,7 @@ def winRun(column):
                 names=QueryValueEx(asubKey,"Name")
                 regPrintersPort.append(ports[0])
                 regPrintersName.append(names[0])
-                logger.warning("PRINTER_NAME#"+str(i)+": %s",names[0])
-                logger.warning("PRINTER_PORT#"+str(i)+": %s",ports[0])
+                logger.warning('PRINTER_NAME/PORT: "%s"/"%s"',names[0],ports[0])
             except EnvironmentError:
                 pass
         return [regPrintersName, regPrintersPort]
@@ -138,66 +128,65 @@ def winRun(column):
             portIndex = printers[1].index(color)
             printName = printers[0][portIndex]
             command = 'printui.exe /dl /n "'+printName+'" /q'
-            #subprocess.call([command])
             os.system(command)
             removed.append(printName)
         return removed
 
     def renameBW(bws):
+        regex = re.compile(' [Bb][ ]*&[ ]*[Ww]')
         renamed = {}
         for bw in bws:
-            if "b&w" in bw.lower():
+            if regex.search(bw.lower()) != None:
                 newName = re.sub(' [Bb][ ]*&[ ]*[Ww]','',bw)
-                #portIndex = printers[1].index(bw)
-                #printName = printers[0][portIndex]
+                print(newName)
                 command = 'cscript C:\Windows\System32\Printing_Admin_Scripts\en-US\prncnfg.vbs -x -p "'+str(bw)+'" -z "'+newName+'"'
                 os.system(command)
                 renamed[bw] = newName
         return renamed
     
     WS_Number = platform.node()[2:]
-    if WS_Number in column["WS#"]:
-        WS_DB_index = column["WS#"].index(WS_Number)
-        printers2 = column["Printers"][WS_DB_index]
-        printers = findPrinters()
-        colors = identifyColor(printers[1])
-        bws = identifyBW(printers,list(set(printers[1])-set(colors)))
+    # if WS_Number in column["WS#"]:
+    #     WS_DB_index = column["WS#"].index(WS_Number)
+    #     printers2 = column["Printers"][WS_DB_index]
+    printers = findPrinters()
+    colors = identifyColor(printers[1])
+    bws = identifyBW(printers,list(set(printers[1])-set(colors)))
 
-        if len(colors) == 0 and len(bws) == 0:
-            logger.warning("+++++++++++++++++++")
-            logger.warning("WARNING: NO COLOR AND B&W PRINTERS FOUND")
-            logger.warning("+++++++++++++++++++")
-            report(None)
-        elif len(colors) != 0 and len(bws) == 0:
-            logger.warning("+++++++++++++++++++")
-            logger.warning("WARNING: NO B&W PRINTERS FOUND")
-            logger.warning("THE FOLLOWING COLOR PRINTERS WERE REMOVED")
-            logger.warning("+++++++++++++++++++")
-            removed = removeColors(colors)
-            logger.warning(" ".join(removed))
-        elif len(colors) == 0 and len(bws) != 0:
-            logger.warning("+++++++++++++++++++")
-            logger.warning("WARNING: NO COLOR PRINTERS FOUND")
-            logger.warning("THE FOLLOWING B&W PRINTERS WERE RENAMED")
-            logger.warning("+++++++++++++++++++")
-            renamed = renameBW(bws)
-            for key,value in renamed.items():
-                logger.warning("WARNING: "+key+" RENAMED TO "+value)
-        else:
-            logger.warning("+++++++++++++++++++")
-            logger.warning("THE FOLLOWING COLOR PRINTERS WERE REMOVED")
-            logger.warning("+++++++++++++++++++")
-            removed = removeColors(colors)
-            logger.warning(" ".join(removed))
-            logger.warning("+++++++++++++++++++")
-            logger.warning("THE FOLLOWING B&W PRINTERS WERE RENAMED")
-            logger.warning("+++++++++++++++++++")
-            renamed = renameBW(bws)
-            for key,value in renamed.items():
-                logger.warning(key+" RENAMED TO "+value)
-
+    if len(colors) == 0 and len(bws) == 0:
+        logger.warning("+++++++++++++++++++")
+        logger.warning("WARNING: NO COLOR AND B&W PRINTERS FOUND")
+        logger.warning("+++++++++++++++++++")
+        report(None)
+    elif len(colors) != 0 and len(bws) == 0:
+        logger.warning("+++++++++++++++++++")
+        logger.warning("WARNING: NO B&W PRINTERS FOUND")
+        logger.warning("THE FOLLOWING COLOR PRINTERS WERE REMOVED")
+        logger.warning("+++++++++++++++++++")
+        removed = removeColors(colors)
+        logger.warning(" ".join(removed))
+    elif len(colors) == 0 and len(bws) != 0:
+        logger.warning("+++++++++++++++++++")
+        logger.warning("WARNING: NO COLOR PRINTERS FOUND")
+        logger.warning("THE FOLLOWING B&W PRINTERS WERE RENAMED")
+        logger.warning("+++++++++++++++++++")
+        renamed = renameBW(bws)
+        for key,value in renamed.items():
+            logger.warning("WARNING: "+key+" RENAMED TO "+value)
     else:
-        log.error("ERROR: %s","WORKSTATION IS NOT ON THE LIST")
+        logger.warning("+++++++++++++++++++")
+        logger.warning("THE FOLLOWING COLOR PRINTERS WERE REMOVED")
+        logger.warning("+++++++++++++++++++")
+        removed = removeColors(colors)
+        logger.warning(" ".join(removed))
+        logger.warning("+++++++++++++++++++")
+        logger.warning("THE FOLLOWING B&W PRINTERS WERE RENAMED")
+        logger.warning("+++++++++++++++++++")
+        renamed = renameBW(bws)
+        for key,value in renamed.items():
+            logger.warning(key+" RENAMED TO "+value)
+
+    # else:
+    #     log.error("ERROR: %s","WORKSTATION IS NOT ON THE LIST")
 
 def macRun(column):
     WS_Number = platform.node().strip(".")[0]
@@ -224,8 +213,6 @@ def macRun(column):
         print("WS NOT ON THE LIST")
 
 def main():
-
-    # Need to know how to get the workstation number from mac or pc
 
     with open('dataset_sep.csv', 'rb') as csvfile:
         reader = csv.reader(csvfile,delimiter=",")
