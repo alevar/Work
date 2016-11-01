@@ -2,6 +2,9 @@ import csv
 import os
 import platform
 import subprocess
+import re
+import logging
+import time
 from pprint import pprint
 
 currentPlatform = platform.system()
@@ -54,14 +57,15 @@ colorQueues = [ "ca_111_ac",
                 "un_pu_cc"]
 
 def report(queue):
-    print("REPORT")
+    pass
 
-def identifyBW(queues):
+def identifyBW(printers,queues):
     bws = []
+    regex = "HIP"
     for queue in queues:
         for subqueue in queue.lower().split():
-            if "b&w" in queue.lower():
-                bws.append(queue)
+            if " b&w" in printers[0][printers[1].index(queue)].lower():
+                bws.append(printers[0][printers[1].index(queue)])
     return list(set(bws))
 
 def identifyColor(queues):
@@ -89,18 +93,29 @@ def linRun(column):
         else:
             print("WOO Both")
 
-        print(WS_DB_index)
-        print(printers)
-        print(colors)
-        print(bws)
-
 def winRun(column):
+    
+    logger = logging.getLogger('printerRenameApp')
+    hdlr = logging.FileHandler('C:\Users\Administrator\AppData\printerRenameApp.log')
+    formatter = logging.Formatter('%(message)s')
+    hdlr.setFormatter(formatter)
+    logger.addHandler(hdlr)
+    logger.setLevel(logging.INFO)
+
+    reportStr = ""
+
+    logger.warning("MACHINE: %s",platform.node()[2:])
+    logger.warning("OS: %s",currentPlatform)
+    logger.warning("DATE/TIME: %s",time.strftime("%c") )
 
     def findPrinters():
         regPrintersPort = []
         regPrintersName = []
         
         aReg = ConnectRegistry(None,HKEY_LOCAL_MACHINE)
+        logger.info("==========================")
+        logger.info("ALL IDENTIFIED PRINTERS")
+        logger.info("==========================")
 
         aKey = OpenKey(aReg,r"SYSTEM\CurrentControlSet\Control\Print\Printers")
         for i in range(1024):
@@ -111,42 +126,78 @@ def winRun(column):
                 names=QueryValueEx(asubKey,"Name")
                 regPrintersPort.append(ports[0])
                 regPrintersName.append(names[0])
-                print("VAL", ports)
-                print("NAME: ",names)
+                logger.warning("PRINTER_NAME#"+str(i)+": %s",names[0])
+                logger.warning("PRINTER_PORT#"+str(i)+": %s",ports[0])
             except EnvironmentError:
                 pass
         return [regPrintersName, regPrintersPort]
+
+    def removeColors(colors):
+        removed = []
+        for color in colors:
+            portIndex = printers[1].index(color)
+            printName = printers[0][portIndex]
+            command = 'printui.exe /dl /n "'+printName+'" /q'
+            #subprocess.call([command])
+            os.system(command)
+            removed.append(printName)
+        return removed
+
+    def renameBW(bws):
+        renamed = {}
+        for bw in bws:
+            if "b&w" in bw.lower():
+                newName = re.sub(' [Bb][ ]*&[ ]*[Ww]','',bw)
+                #portIndex = printers[1].index(bw)
+                #printName = printers[0][portIndex]
+                command = 'cscript C:\Windows\System32\Printing_Admin_Scripts\en-US\prncnfg.vbs -x -p "'+str(bw)+'" -z "'+newName+'"'
+                os.system(command)
+                renamed[bw] = newName
+        return renamed
     
-    WS_Number = "5172" #platform.node()[2:]
+    WS_Number = platform.node()[2:]
     if WS_Number in column["WS#"]:
         WS_DB_index = column["WS#"].index(WS_Number)
         printers2 = column["Printers"][WS_DB_index]
         printers = findPrinters()
         colors = identifyColor(printers[1])
-        bws = identifyBW(list(set(printers[1])-set(colors)))
+        bws = identifyBW(printers,list(set(printers[1])-set(colors)))
 
         if len(colors) == 0 and len(bws) == 0:
+            logger.warning("+++++++++++++++++++")
+            logger.warning("WARNING: NO COLOR AND B&W PRINTERS FOUND")
+            logger.warning("+++++++++++++++++++")
             report(None)
         elif len(colors) != 0 and len(bws) == 0:
-            for color in colors:
-                portIndex = printers[1].index(color)
-                printName = printers[0][portIndex]
-                print("LALA",str(printName))
-                command = 'printui.exe /dl /n "'+printName+'" /q'
-                #subprocess.call([command])
-                os.system(command)
-            print("WOO Color")
+            logger.warning("+++++++++++++++++++")
+            logger.warning("WARNING: NO B&W PRINTERS FOUND")
+            logger.warning("THE FOLLOWING COLOR PRINTERS WERE REMOVED")
+            logger.warning("+++++++++++++++++++")
+            removed = removeColors(colors)
+            logger.warning(" ".join(removed))
         elif len(colors) == 0 and len(bws) != 0:
-            print("WOO BWS")
+            logger.warning("+++++++++++++++++++")
+            logger.warning("WARNING: NO COLOR PRINTERS FOUND")
+            logger.warning("THE FOLLOWING B&W PRINTERS WERE RENAMED")
+            logger.warning("+++++++++++++++++++")
+            renamed = renameBW(bws)
+            for key,value in renamed.items():
+                logger.warning("WARNING: "+key+" RENAMED TO "+value)
         else:
-            print("WOO Both")
+            logger.warning("+++++++++++++++++++")
+            logger.warning("THE FOLLOWING COLOR PRINTERS WERE REMOVED")
+            logger.warning("+++++++++++++++++++")
+            removed = removeColors(colors)
+            logger.warning(" ".join(removed))
+            logger.warning("+++++++++++++++++++")
+            logger.warning("THE FOLLOWING B&W PRINTERS WERE RENAMED")
+            logger.warning("+++++++++++++++++++")
+            renamed = renameBW(bws)
+            for key,value in renamed.items():
+                logger.warning(key+" RENAMED TO "+value)
 
-        print("Index ",WS_DB_index)
-        print("All Printers ",printers)
-        print("Colors ",colors)
-        print("BWS ",bws)
     else:
-        print("WS NOT ON THE LIST")
+        log.error("ERROR: %s","WORKSTATION IS NOT ON THE LIST")
 
 def macRun(column):
     WS_Number = platform.node().strip(".")[0]
@@ -174,14 +225,11 @@ def macRun(column):
 
 def main():
 
-    print("current platform", currentPlatform)
-
     # Need to know how to get the workstation number from mac or pc
 
     with open('dataset_sep.csv', 'rb') as csvfile:
         reader = csv.reader(csvfile,delimiter=",")
         headers = reader.next()
-        print(headers)
         column = {h:[] for h in headers}
         for row in reader:
             for h, v in zip(headers, row):

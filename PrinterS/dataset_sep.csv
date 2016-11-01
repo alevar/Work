@@ -1,4 +1,4 @@
-Os Name,WS#,Long WS#,System Description,Printers,User Logged,Cs Domain
+﻿Os Name,WS#,Long WS#,System Description,Printers,User Logged,Cs Domain
 ,,,,,,
 Mac macOS 10.12 (x86_64),8468,8468,empty,,ciucad01,local
 Mac macOS 10.12 (x86_64),8493,8493,empty,"UN_PU_C B&W-idle
@@ -1197,6 +1197,7 @@ RICOH Aficio MP 4000 PCL 5e",LC\\goulkr01,lc.luther.edu
 Microsoft Windows 7 Enterprise,3323,WS3323,empty,"CutePDF Writer
 LANIER SP 3510DN PCL 6",LUTHER_COLLEGE\\myregr01,lc.luther.edu
 Microsoft Windows 7 Enterprise,3357,WS3357,Faculty/Staff,,WS3357\\user,LUTHER_COLLEGE
+Microsoft Windows 7 Enterprise,7364,WS7364,Faculty/Staff,,WS7364\\user,LUTHER_COLLEGE
 Microsoft Windows 7 Enterprise,3405,WS3405,Faculty/Staff,,WS3405\\user,LUTHER_COLLEGE
 Microsoft Windows 7 Enterprise,3443,WS3443,Faculty/Staff,,WS3443\\user,LUTHER_COLLEGE
 Microsoft Windows 7 Enterprise,3450,WS3450,Faculty/Staff,,WS3450\\user,WORKGROUP
